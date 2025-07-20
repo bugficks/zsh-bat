@@ -1,19 +1,25 @@
 
-if command -v batcat >/dev/null 2>&1; then
-  # Save the original system `cat` under `rcat`
-  alias rcat="$(which cat)"
+setup_cat_alias() {
+  local batcmd="$1"
 
+  # Save original cat
+  alias rcat="$(printf '%q' "$(command -v cat)")"
+  alias cat="$(printf '%q' "$(command -v "$batcmd")")"
+
+  # Configure man pager
+  export MANPAGER="sh -c 'col -bx | $batcmd -l man -p'"
+  export MANROFFOPT="-c"
+}
+
+# Prefer bat over batcat, e.g. bat installed in ~/bin
+if command -v bat >/dev/null 2>&1; then
+  setup_cat_alias "bat"
+
+elif command -v batcat >/dev/null 2>&1; then
   # For Ubuntu and Debian-based `bat` packages
   # the `bat` program is named `batcat` on these systems
-  alias cat="$(which batcat)"
-  export MANPAGER="sh -c 'col -bx | batcat -l man -p'"
-  export MANROFFOPT="-c"
-elif command -v bat >/dev/null 2>&1; then
-  # Save the original system `cat` under `rcat`
-  alias rcat="$(which cat)"
+  setup_cat_alias "batcat"
 
-  # For all other systems
-  alias cat="$(which bat)"
-  export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-  export MANROFFOPT="-c"
 fi
+
+unset -f setup_cat_alias
